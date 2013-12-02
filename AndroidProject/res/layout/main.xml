@@ -86,7 +86,6 @@
         android:id="@+id/labelEEG"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/labelHeartRate"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/labelEEGStatusMsg"
         android:layout_marginTop="15dp"

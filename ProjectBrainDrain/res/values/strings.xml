@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Project Brain Drain</string>
+    <string name="action_connect">Connect</string>
+    <string name="title_section1">Real Time Data</string>
+    <string name="title_section2">Trend Data</string>
+    <string name="title_section3">Section 3</string>
+
+</resources>
