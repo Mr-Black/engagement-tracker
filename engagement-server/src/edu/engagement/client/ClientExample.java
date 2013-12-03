@@ -10,8 +10,10 @@ import edu.engagement.thrift.EegAttention;
 import edu.engagement.thrift.EegPower;
 import edu.engagement.thrift.EegRaw;
 import edu.engagement.thrift.EngagementInformation;
+import edu.engagement.thrift.EngagementQuery;
 import edu.engagement.thrift.EngagementService;
 import edu.engagement.thrift.EngagementServiceUnavailable;
+import edu.engagement.thrift.Event;
 import edu.engagement.thrift.HeartRate;
 
 public class ClientExample {
@@ -60,6 +62,17 @@ public class ClientExample {
 			info.addToHeartRateMessages(hr);
 			
 			client.syncEngagementInformation(info);
+			
+			// Basic engagement query
+			EngagementQuery query = new EngagementQuery();
+			query.setGoogleId("code.mr.black");
+			Event e = new Event();
+			e.setName("Mock Event");
+			e.setStart(Long.toString(0));
+			e.setFinish(Long.toString(System.currentTimeMillis()));
+			query.addToEvents(e);
+			client.getEngagmentInformation(query);
+			
 			transport.close();
 		} catch(TTransportException e) {
 			// TODO(mr-black): Fail intelligently.

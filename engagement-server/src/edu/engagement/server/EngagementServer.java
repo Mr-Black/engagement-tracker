@@ -62,8 +62,6 @@ public class EngagementServer implements Runnable {
 		// Intialize DB driver
 		Class.forName("org.postgresql.Driver");
 
-		Properties prop = new Properties();
-
         // Start engagement server
         new Thread(new EngagementServer()).run();
     }		

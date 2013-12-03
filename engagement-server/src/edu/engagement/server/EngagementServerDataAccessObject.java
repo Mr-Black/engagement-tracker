@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -17,6 +18,7 @@ import edu.engagement.thrift.EegAttention;
 import edu.engagement.thrift.EegPower;
 import edu.engagement.thrift.EegRaw;
 import edu.engagement.thrift.EngagementInformation;
+import edu.engagement.thrift.Event;
 import edu.engagement.thrift.HeartRate;
 
 public class EngagementServerDataAccessObject {
@@ -28,9 +30,11 @@ public class EngagementServerDataAccessObject {
 	private static final String INSERTUSERKEY = "InsertUser";
 	private static final String GETUSERKEY = "GetUser";
 	private static final String INSERTPOWERKEY = "InsertEegPower";
+	private static final String GETPOWERKEY = "GetEegPowerDuringRange";
 	private static final String INSERTATTENTIONKEY = "InsertEegAttention";
 	private static final String INSERTRAWKEY = "InsertEegRaw";
 	private static final String INSERTHEARTRATEKEY = "InsertHeartRate";
+	private static final String GETHEARTRATEKEY = "GetHeartRateDuringRange";
 
 	private Properties prop;
 	private Jdbc3PoolingDataSource source;
@@ -40,6 +44,110 @@ public class EngagementServerDataAccessObject {
 		prop = new Properties();
 		prop.load(new FileInputStream("server_sql_statements.properties"));
 		source = newSource;
+	}
+	
+	public List<EegPower> getPowerData(String username, Event userEvent) {
+		Connection con = null;
+		ResultSet powerData = null;
+		List<EegPower> result = new ArrayList<EegPower>();
+		
+		try {
+			con = source.getConnection();
+			powerData = getPowerData(con, username, userEvent);
+			while (powerData.next()) {
+				EegPower powerReading = new EegPower();
+				Timestamp ts = powerData.getTimestamp(3);
+				Long time = ts.getTime();
+				powerReading.setMillisecondTimeStamp(Long.toString(time));
+				powerReading.setAlpha(powerData.getInt(4));
+				powerReading.setBeta(powerData.getInt(5));
+				powerReading.setTheta(powerData.getInt(6));
+				result.add(powerReading);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				if(con != null) {
+					con.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
+	
+	private ResultSet getPowerData(Connection con, String username,
+			Event userEvent) throws SQLException {
+		Long time;
+		Timestamp startingTime, finishTime;
+		PreparedStatement getPowerData;
+		
+		time = Long.parseLong(userEvent.getStart());
+		startingTime = new Timestamp(time);
+		time = Long.parseLong(userEvent.getFinish());
+		finishTime = new Timestamp(time);
+		
+		getPowerData = con.prepareStatement(prop
+				.getProperty(GETPOWERKEY));
+		getPowerData.setString(1, username);
+		getPowerData.setTimestamp(2, startingTime);
+		getPowerData.setTimestamp(3, finishTime);
+		return getPowerData.executeQuery();
+	}
+	
+	public List<HeartRate> getHeartRateData(String username, Event userEvent) {
+		Connection con = null;
+		ResultSet heartRateData = null;
+		List<HeartRate> result = new ArrayList<HeartRate>();
+		
+		try {
+			con = source.getConnection();
+			heartRateData = getHeartRateData(con, username, userEvent);
+			while (heartRateData.next()) {
+				HeartRate heartRateReading = new HeartRate();
+				Timestamp ts = heartRateData.getTimestamp(3);
+				Long time = ts.getTime();
+				heartRateReading.setMillsecondTimeStamp(Long.toString(time));
+				heartRateReading.setBpm(heartRateData.getInt(4));
+				result.add(heartRateReading);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				if(con != null) {
+					con.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
+	
+	private ResultSet getHeartRateData(Connection con, String username,
+			Event userEvent) throws SQLException {
+		Long time;
+		Timestamp startingTime, finishTime;
+		PreparedStatement getHeartRateData;
+		
+		time = Long.parseLong(userEvent.getStart());
+		startingTime = new Timestamp(time);
+		time = Long.parseLong(userEvent.getFinish());
+		finishTime = new Timestamp(time);
+		
+		getHeartRateData = con.prepareStatement(prop
+				.getProperty(GETHEARTRATEKEY));
+		getHeartRateData.setString(1, username);
+		getHeartRateData.setTimestamp(2, startingTime);
+		getHeartRateData.setTimestamp(3, finishTime);
+		return getHeartRateData.executeQuery();
 	}
 
 	public void addEngagmentInfo(EngagementInformation info) {
@@ -51,7 +159,8 @@ public class EngagementServerDataAccessObject {
 			con.setAutoCommit(false);
 			addEegPowerMessages(con, info.getGoogleId(),
 					info.getEegPowerMessages());
-			addEegRawMessages(con, info.getGoogleId(), info.getEegRawMessages());
+			addEegRawMessages(con, info.getGoogleId(),
+					info.getEegRawMessages());
 			addHeartRateMessages(con, info.getGoogleId(),
 					info.getHeartRateMessages());
 			addEegAttentionMessages(con, info.getGoogleId(),
@@ -76,6 +185,11 @@ public class EngagementServerDataAccessObject {
 		}
 	}
 
+	/*
+	 *  TODO(mtbarnes): Each of these should catch their sql exception and
+	 *  		log them intelligently. This is something I will need to spend
+	 *  		time on.
+	 */
 	private boolean userExists(Connection con, String username) 
 			throws SQLException {
 		PreparedStatement getUser = con.prepareStatement(prop
