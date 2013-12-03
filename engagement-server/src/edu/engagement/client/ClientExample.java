@@ -16,6 +16,12 @@ import edu.engagement.thrift.EngagementServiceUnavailable;
 import edu.engagement.thrift.Event;
 import edu.engagement.thrift.HeartRate;
 
+/**
+ * @author Michael Barnes
+ *
+ * Example thrift client code for making server queries. This can be used as a
+ * general guide for interacting with the server.
+ */
 public class ClientExample {
 	private static final int PORT = 7911;
 	

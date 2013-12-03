@@ -21,6 +21,11 @@ import edu.engagement.thrift.EngagementInformation;
 import edu.engagement.thrift.Event;
 import edu.engagement.thrift.HeartRate;
 
+/**
+ * @author Michael Barnes
+ *
+ * Object for accessing the engagement data stored on the server.
+ */
 public class EngagementServerDataAccessObject {
 	/*
 	 * These constants are the keys required for getting the needed queries from
@@ -39,6 +44,17 @@ public class EngagementServerDataAccessObject {
 	private Properties prop;
 	private Jdbc3PoolingDataSource source;
 
+	/**
+	 * Constructor for data access object. It loads the SQL used by the server
+	 * from the server_sql_statements.properties file in the engagement-server/
+	 * directory.
+	 * 
+	 * @param newSource		The database connection pool.
+	 * @throws FileNotFoundException	If the server_sql_statements.properties
+	 * 		can't be found in the engagement-server/ directory.
+	 * @throws IOException		When an I/O exception occurs loading the
+	 * 		properties file.
+	 */
 	public EngagementServerDataAccessObject(Jdbc3PoolingDataSource newSource)
 			throws FileNotFoundException, IOException {
 		prop = new Properties();
@@ -46,6 +62,11 @@ public class EngagementServerDataAccessObject {
 		source = newSource;
 	}
 	
+	/**
+	 * @param username
+	 * @param userEvent
+	 * @return
+	 */
 	public List<EegPower> getPowerData(String username, Event userEvent) {
 		Connection con = null;
 		ResultSet powerData = null;
