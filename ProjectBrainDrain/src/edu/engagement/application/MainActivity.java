@@ -30,9 +30,16 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+
+import edu.engagement.thrift.EegAttention;
+import edu.engagement.thrift.EegPower;
+import edu.engagement.thrift.EegRaw;
 import edu.engagement.thrift.EngagementInformation;
+import edu.engagement.thrift.EngagementQuery;
 import edu.engagement.thrift.EngagementService;
 import edu.engagement.thrift.EngagementServiceUnavailable;
+import edu.engagement.thrift.Event;
+import edu.engagement.thrift.HeartRate;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.support.v4.app.Fragment;
@@ -143,8 +150,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         // the receiver has changed to Paired
         IntentFilter filter2 = new IntentFilter("android.bluetooth.device.action.BOND_STATE_CHANGED");
         this.getApplicationContext().registerReceiver(new BTBondReceiver(), filter2);
-        
-        //Creates a contextual action bar that allows the user to connect
+
+        // Creates a contextual action bar that allows the user to connect
         mActionMode = startActionMode(mActionModeCallback);
     }
 
@@ -179,8 +186,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                 case R.id.action_connect:
                     String BhMacID = "00:07:80:9D:8A:E8";
                     adapter = BluetoothAdapter.getDefaultAdapter();
-                    
-                    if(!EEGConnected)
+
+                    if (!EEGConnected)
                     {
                         if (adapter != null)
                         {
@@ -193,8 +200,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                                 tgDevice.connect(rawEnabled);
                         }
                     }
-                    
-                    if(!HRConnected)
+
+                    if (!HRConnected)
                     {
                         Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
 
@@ -225,7 +232,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                             String ErrorText = "Connected to HxM " + DeviceName;
                             Toast.makeText(getApplicationContext(), ErrorText, Toast.LENGTH_SHORT).show();
                             HRConnected = true;
-                            if(HRConnected && EEGConnected)
+                            if (HRConnected && EEGConnected)
                             {
                                 mActionMode.finish();
                             }
@@ -250,7 +257,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
             mActionMode = null;
         }
     };
-    
+
     @Override
     public void onDestroy()
     {
@@ -263,23 +270,29 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
             TBinaryProtocol protocol = new TBinaryProtocol(transport);
             EngagementService.Client client = new EngagementService.Client(protocol);
             transport.open();
+            
             EngagementInformation info = new EngagementInformation();
             info.setGoogleId("code.mr.black");
             info.setEegPowerMessages(dataSource.getAllDataPointsEEG());
             info.setHeartRateMessages(dataSource.getAllDataPointsHR());
+            //TODO(aweck) info.setEegAttentionMessages(dataSource.getAllDataPointsAttention());
+            //TODO(aweck) info.setEegRawMessages(dataSource.getAllDataPointsRaw());
             client.syncEngagementInformation(info);
             transport.close();
             dataSource.clearDatabse();
             dataSource.close();
-        } catch (TTransportException e)
+        }
+        catch (TTransportException e)
         {
             // TODO(mr-black): Fail intelligently.
             e.printStackTrace();
-        } catch (EngagementServiceUnavailable e)
+        }
+        catch (EngagementServiceUnavailable e)
         {
             // TODO(mr-black): Fail intelligently.
             e.printStackTrace();
-        } catch (TException e)
+        }
+        catch (TException e)
         {
             // TODO(mr-black): Fail intelligently.
             e.printStackTrace();
@@ -333,17 +346,11 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
             if (position == 0)
             {
                 return new RealTimeDataFragment();
-            } 
+            }
             else
             {
-                // getItem is called to instantiate the fragment for the given page.
-                // Return a DummySectionFragment (defined as a static inner class
-                // below) with the page number as its lone argument.
-                Fragment fragment = new DummySectionFragment();
-                Bundle args = new Bundle();
-                args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
-                fragment.setArguments(args);
-                return fragment;
+                return new OverallFragment();
+                
             }
         }
 
@@ -437,7 +444,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                     int HeartRate = msg.getData().getInt("HeartRate");
                     String HeartRatetext = "" + HeartRate;
                     System.out.println("Heart Rate Info is " + HeartRatetext);
-                    TextView tv = (TextView)findViewById(R.id.HeartRateText);
+                    TextView tv = (TextView) findViewById(R.id.HeartRateText);
                     tv.setText(HeartRatetext);
                     dataSource.createDataPointHR(System.currentTimeMillis(), HeartRate);
                     break;
@@ -466,7 +473,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                         case TGDevice.STATE_CONNECTED:
                             Toast.makeText(getApplicationContext(), "MindWave Connected", Toast.LENGTH_SHORT).show();
                             EEGConnected = true;
-                            if(HRConnected && EEGConnected)
+                            if (HRConnected && EEGConnected)
                             {
                                 mActionMode.finish();
                             }
@@ -476,7 +483,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                         case TGDevice.STATE_NOT_PAIRED:
                             Toast.makeText(getApplicationContext(), "MindWave Not Paired", Toast.LENGTH_SHORT).show();
                             break;
-                            
+
                         case TGDevice.STATE_DISCONNECTED:
                             EEGConnected = false;
                             mActionMode = startActionMode(mActionModeCallback);
@@ -493,7 +500,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                     break;
 
                 case TGDevice.MSG_ATTENTION:
-                    // TODO: Add to DB
+                    // TODO(aweck) Add to DB
                     int att = msg.arg1;
                     // dataSource.createDataPointAttention(System.currentTimeMillis(),
                     // att);
@@ -509,15 +516,13 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
                     dataSource.createDataPointEEG(System.currentTimeMillis(), alpha, beta, theta);
 
-                    TextView tv = (TextView)findViewById(R.id.EEGText);
-                    DecimalFormat df = new DecimalFormat("#.##"); 
+                    TextView tv = (TextView) findViewById(R.id.EEGText);
+                    DecimalFormat df = new DecimalFormat("#.##");
                     tv.setText(df.format((beta / (alpha + theta))));
                     System.out.println("Engagement is " + (beta / (alpha + theta)));
                     break;
 
                 case TGDevice.MSG_RAW_MULTI:
-                    // TODO: Add to DB
-                    // TODO: Add to Server Code
                     TGRawMulti eegRaw = (TGRawMulti) msg.obj;
                     double ch1 = eegRaw.ch1;
                     double ch2 = eegRaw.ch2;
@@ -528,7 +533,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                     double ch7 = eegRaw.ch7;
                     double ch8 = eegRaw.ch8;
 
-                    // dataSource.createDataPointRaw(System.currentTimeMillis(),
+                    //TODO (aweck) dataSource.createDataPointRaw(System.currentTimeMillis(),
                     // ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8);
 
                     System.out.println("Gathereed Raw Data");

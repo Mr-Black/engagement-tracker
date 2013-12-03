@@ -32,7 +32,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class EegAttention implements org.apache.thrift.TBase<EegAttention, EegAttention._Fields>, java.io.Serializable, Cloneable, Comparable<EegAttention> {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("EegAttention");
 
