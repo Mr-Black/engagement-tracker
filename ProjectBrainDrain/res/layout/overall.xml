@@ -24,7 +24,7 @@
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
             android:textColor="#FFFFFF"
-            android:text="Drag circles here to compare!" />
+            android:text="Click and hold circles to compare!" />
 
     </RelativeLayout>
 
