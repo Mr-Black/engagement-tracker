@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="hello">Project Brain Drain Zephyr Test</string>
-    <string name="app_name">NewHxMApp</string>
-    <string name="labelHeartRate">000</string>
-    <string name="labelStatusMsg"></string>
-</resources>
